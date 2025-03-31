@@ -2,7 +2,7 @@
   "name": "md-issue-explorer",
   "displayName": "md-issue-explorer",
   "description": "",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "repository": "local",
   "engines": {
     "vscode": "^1.98.0"
@@ -50,7 +50,7 @@
         {
           "when": "view == issueExplorer && viewItem == folder",
           "command": "issueExplorer.newIssue",
-          "group": "navigation"
+          "group": "1_new"
         },
         {
           "when": "view == issueExplorer",
@@ -60,7 +60,7 @@
         {
           "when": "view == issueExplorer",
           "command": "issueExplorer.deleteIssue",
-          "group": "navigation"
+          "group": "2_delete"
         }
       ],
       "view/title": [
