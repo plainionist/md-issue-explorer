@@ -54,6 +54,7 @@ export class IssueProvider implements vscode.TreeDataProvider<IssueItem> {
 
     const folderItem = new IssueItem(entry.name, vscode.Uri.file(fullPath), vscode.TreeItemCollapsibleState.Collapsed, priority);
     folderItem.children = children;
+    folderItem.contextValue = "folder";
 
     return folderItem;
   }
