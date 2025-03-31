@@ -3,6 +3,7 @@
   "displayName": "md-issue-explorer",
   "description": "",
   "version": "0.0.1",
+  "repository": "local",
   "engines": {
     "vscode": "^1.98.0"
   },
