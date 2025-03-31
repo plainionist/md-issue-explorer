@@ -64,19 +64,25 @@ export function activate(context: vscode.ExtensionContext) {
   if (rootPath) {
     const issueFolder = path.join(rootPath, "issues");
     const issueWatcher = vscode.workspace.createFileSystemWatcher(
-      `${issueFolder}/*.md`
+      new vscode.RelativePattern(issueFolder, '**/*.md')
     );
-
+    
     issueWatcher.onDidChange(() => issueProvider.refresh());
     issueWatcher.onDidCreate(() => issueProvider.refresh());
     issueWatcher.onDidDelete(() => issueProvider.refresh());
     
     vscode.workspace.onDidSaveTextDocument((doc) => {
-      if (doc.uri.fsPath.startsWith(`${rootPath}/issues/`) && doc.uri.fsPath.endsWith('.md')) {
+      const relativePath = path.relative(issueFolder, doc.uri.fsPath);
+    
+      if (
+        !relativePath.startsWith('..') && // doc is inside the issues folder
+        relativePath.endsWith('.md') &&
+        path.basename(doc.uri.fsPath) !== '.template'
+      ) {
         issueProvider.refresh();
       }
     });
-    
+        
     context.subscriptions.push(issueWatcher);
   }
 }
