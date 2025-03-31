@@ -12,7 +12,7 @@ async function createNewIssue(issuesFolder: string | undefined) {
   }
 
   const templatePath = path.join(issuesFolder, ".template");
-  const defaultTemplate = "---\ntitle: \npriority: \n---\n\n";
+  const defaultTemplate = "---\ntitle: \npriority: 9999\n---\n\n";
   const templateContent = fs.existsSync(templatePath) ? fs.readFileSync(templatePath, "utf8") : defaultTemplate;
 
   const name = await vscode.window.showInputBox({ prompt: "Enter issue name" });
@@ -78,23 +78,26 @@ function registerFileWatcher(issuesFolder: string | undefined, issueProvider: Is
 
 export function activate(context: vscode.ExtensionContext) {
   const rootPath = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
-  const issueFolder = rootPath ? path.join(rootPath, "issues") : "";
-  const issueProvider = new IssueProvider(issueFolder);
+  const issuesFolder = rootPath ? path.join(rootPath, "issues") : "";
+  const issueProvider = new IssueProvider(issuesFolder);
 
   vscode.window.registerTreeDataProvider("issueExplorer", issueProvider);
 
   context.subscriptions.push(
     vscode.commands.registerCommand("issueExplorer.refresh", () => issueProvider.refresh()),
 
-    vscode.commands.registerCommand("issueExplorer.newIssue", async (target?: IssueItem) => {
-      const folder = target?.contextValue === "folder" ? target.resourceUri.fsPath : issueFolder;
-      await createNewIssue(folder);
+    vscode.commands.registerCommand("issueExplorer.newIssueInFolder", async (target: IssueItem) => {
+      await createNewIssue(target.resourceUri!.fsPath);
+    }),
+
+    vscode.commands.registerCommand("issueExplorer.newIssue", async () => {
+      await createNewIssue(issuesFolder);
     }),
 
     vscode.commands.registerCommand("issueExplorer.deleteIssue", (target: IssueItem) => deleteIssue(issueProvider, target))
   );
 
-  registerFileWatcher(issueFolder, issueProvider, context);
+  registerFileWatcher(issuesFolder, issueProvider, context);
 }
 
 export function deactivate() {}
