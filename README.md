@@ -1,2 +1,2 @@
-# md-issue-explorer
-Pragmatic markdown based issue tracker for VsCode
+
+Pragmatic Issue Tracker based on Markdown, VsCode and your version control system.

@@ -27,7 +27,7 @@ export class IssueProvider implements vscode.TreeDataProvider<IssueItem> {
       return [];
     }
 
-    const files = fs.readdirSync(issueDir).filter(f => f.endsWith('.md'));
+    const files = fs.readdirSync(issueDir).filter(f => f.endsWith('.md') && f !== '.template');
     const items: IssueItem[] = [];
 
     for (const file of files) {
