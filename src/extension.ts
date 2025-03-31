@@ -63,7 +63,7 @@ function registerFileWatcher(rootPath: string | undefined, issueProvider: IssueP
 
 export function activate(context: vscode.ExtensionContext) {
   const rootPath = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
-  const issueProvider = new IssueProvider(rootPath ?? "");
+  const issueProvider = new IssueProvider(rootPath ? path.join(rootPath, "issues") : "");
 
   vscode.window.registerTreeDataProvider("issueExplorer", issueProvider);
 

@@ -5,7 +5,7 @@ import matter from "gray-matter";
 import { IssueItem } from "./IssueItem";
 
 export class IssueProvider implements vscode.TreeDataProvider<IssueItem> {
-  constructor(private workspaceRoot: string) {}
+  constructor(private issuesRoot: string) {}
 
   private _onDidChangeTreeData: vscode.EventEmitter<IssueItem | undefined | void> = new vscode.EventEmitter<IssueItem | undefined | void>();
   readonly onDidChangeTreeData: vscode.Event<IssueItem | undefined | void> = this._onDidChangeTreeData.event;
@@ -19,7 +19,7 @@ export class IssueProvider implements vscode.TreeDataProvider<IssueItem> {
   }
 
   async getChildren(element?: IssueItem): Promise<IssueItem[]> {
-    const root = element?.resourceUri.fsPath ?? path.join(this.workspaceRoot, "issues");
+    const root = element?.resourceUri.fsPath ?? this.issuesRoot;
 
     return await this.buildIssueTree(root);
   }
