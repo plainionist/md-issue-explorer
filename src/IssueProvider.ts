@@ -32,30 +32,38 @@ export class IssueProvider implements vscode.TreeDataProvider<IssueItem> {
 
     for (const entry of entries) {
       const fullPath = path.join(folderPath, entry.name);
-      const uri = vscode.Uri.file(fullPath);
 
       if (entry.isDirectory()) {
         const children = await this.buildIssueTree(fullPath);
 
         if (children.length > 0) {
-          // priority of the folder is the highest priority of its children
-          const folderPriority = Math.min(...children.map((c) => c.priority));
-          const folderItem = new IssueItem(entry.name, uri, vscode.TreeItemCollapsibleState.Collapsed, folderPriority);
-          folderItem.children = children;
-          folders.push(folderItem);
+          folders.push(this.createFolderItem(children, entry, fullPath));
         }
       } else if (entry.isFile() && entry.name.endsWith(".md") && entry.name !== ".template") {
-        const content = fs.readFileSync(fullPath, "utf8");
-        const parsed = matter(content);
-        const priority = parsed.data.priority ?? 999;
-        const title = parsed.data.title ?? entry.name;
-
-        const fileItem = new IssueItem(title, uri, vscode.TreeItemCollapsibleState.None, priority);
+        const fileItem = this.createFileItem(fullPath, entry);
         files.push(fileItem);
       }
     }
 
-    const sorted = [...folders, ...files].sort((a, b) => a.priority - b.priority);
-    return sorted;
+    return [...folders, ...files].sort((a, b) => a.priority - b.priority);
+  }
+
+  private createFolderItem(children: IssueItem[], entry: fs.Dirent, fullPath: string) {
+    // priority of the folder is the highest priority of its children
+    const priority = Math.min(...children.map((c) => c.priority));
+
+    const folderItem = new IssueItem(entry.name, vscode.Uri.file(fullPath), vscode.TreeItemCollapsibleState.Collapsed, priority);
+    folderItem.children = children;
+
+    return folderItem;
+  }
+
+  private createFileItem(fullPath: string, entry: fs.Dirent) {
+    const content = fs.readFileSync(fullPath, "utf8");
+    const parsed = matter(content);
+    const priority = parsed.data.priority ?? 999;
+    const title = parsed.data.title ?? entry.name;
+
+    return new IssueItem(title, vscode.Uri.file(fullPath), vscode.TreeItemCollapsibleState.None, priority);
   }
 }
