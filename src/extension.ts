@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { IssueProvider } from "./IssueProvider";
 import * as fs from "fs";
 import * as path from "path";
+import matter from "gray-matter";
 
 async function createNewIssue(rootPath: string | undefined) {
   if (!rootPath) {
@@ -11,16 +12,20 @@ async function createNewIssue(rootPath: string | undefined) {
 
   const issueFolder = path.join(rootPath, "issues");
   const templatePath = path.join(issueFolder, ".template");
-  const templateContent = fs.existsSync(templatePath) ? fs.readFileSync(templatePath, "utf8") : "---\ntitle: \npriority: \n---\n\n";
+  const defaultTemplate = "---\ntitle: \npriority: \n---\n\n";
+  const templateContent = fs.existsSync(templatePath) ? fs.readFileSync(templatePath, "utf8") : defaultTemplate;
 
   const name = await vscode.window.showInputBox({ prompt: "Enter issue name" });
   if (!name) {
     return;
   }
 
-  const filePath = path.join(issueFolder, name.endsWith(".md") ? name : `${name}.md`);
+  const parsed = matter(templateContent);
+  parsed.data.title = name;
 
-  fs.writeFileSync(filePath, templateContent);
+  const filePath = path.join(issueFolder, name.endsWith(".md") ? name : `${name}.md`);
+  const issueContent = matter.stringify(parsed.content, parsed.data);
+  fs.writeFileSync(filePath, issueContent);
 
   const doc = await vscode.workspace.openTextDocument(filePath);
   await vscode.window.showTextDocument(doc);
