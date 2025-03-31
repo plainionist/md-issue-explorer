@@ -43,8 +43,6 @@ export function activate(context: vscode.ExtensionContext) {
 
       const doc = await vscode.workspace.openTextDocument(filePath);
       await vscode.window.showTextDocument(doc);
-
-      issueProvider.refresh();
     }),
 
     vscode.commands.registerCommand(
@@ -58,11 +56,29 @@ export function activate(context: vscode.ExtensionContext) {
 
         if (confirmed === "Yes") {
           fs.unlinkSync(item.resourceUri.fsPath);
-          issueProvider.refresh();
         }
       }
     )
   );
+
+  if (rootPath) {
+    const issueFolder = path.join(rootPath, "issues");
+    const issueWatcher = vscode.workspace.createFileSystemWatcher(
+      `${issueFolder}/*.md`
+    );
+
+    issueWatcher.onDidChange(() => issueProvider.refresh());
+    issueWatcher.onDidCreate(() => issueProvider.refresh());
+    issueWatcher.onDidDelete(() => issueProvider.refresh());
+    
+    vscode.workspace.onDidSaveTextDocument((doc) => {
+      if (doc.uri.fsPath.startsWith(`${rootPath}/issues/`) && doc.uri.fsPath.endsWith('.md')) {
+        issueProvider.refresh();
+      }
+    });
+    
+    context.subscriptions.push(issueWatcher);
+  }
 }
 
 export function deactivate() {}
