@@ -1,6 +1,6 @@
 ---
 title: Add feature 17
-priority: 21
+priority: 2
 assignee: bob
 status: open
 ---

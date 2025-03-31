@@ -7,11 +7,8 @@ import { IssueItem } from "./IssueItem";
 export class IssueProvider implements vscode.TreeDataProvider<IssueItem> {
   constructor(private workspaceRoot: string) {}
 
-  private _onDidChangeTreeData: vscode.EventEmitter<
-    IssueItem | undefined | void
-  > = new vscode.EventEmitter<IssueItem | undefined | void>();
-  readonly onDidChangeTreeData: vscode.Event<IssueItem | undefined | void> =
-    this._onDidChangeTreeData.event;
+  private _onDidChangeTreeData: vscode.EventEmitter<IssueItem | undefined | void> = new vscode.EventEmitter<IssueItem | undefined | void>();
+  readonly onDidChangeTreeData: vscode.Event<IssueItem | undefined | void> = this._onDidChangeTreeData.event;
 
   refresh(): void {
     this._onDidChangeTreeData.fire();
@@ -22,82 +19,43 @@ export class IssueProvider implements vscode.TreeDataProvider<IssueItem> {
   }
 
   async getChildren(element?: IssueItem): Promise<IssueItem[]> {
-    const folderPath =
-      element?.resourceUri.fsPath ?? path.join(this.workspaceRoot, "issues");
+    const root = element?.resourceUri.fsPath ?? path.join(this.workspaceRoot, "issues");
 
-    if (!fs.existsSync(folderPath)) {
-      return [];
-    }
+    return await this.buildIssueTree(root);
+  }
 
+  private async buildIssueTree(folderPath: string): Promise<IssueItem[]> {
     const entries = fs.readdirSync(folderPath, { withFileTypes: true });
 
-    const items: IssueItem[] = [];
+    const folders: IssueItem[] = [];
+    const files: IssueItem[] = [];
 
     for (const entry of entries) {
       const fullPath = path.join(folderPath, entry.name);
       const uri = vscode.Uri.file(fullPath);
 
       if (entry.isDirectory()) {
-        const folderPriority = this.computeFolderPriority(fullPath);
-        items.push(
-          new IssueItem(
-            entry.name,
-            uri,
-            vscode.TreeItemCollapsibleState.Collapsed,
-            folderPriority
-          )
-        );
-      } else if (
-        entry.isFile() &&
-        entry.name.endsWith(".md") &&
-        entry.name !== ".template"
-      ) {
+        const children = await this.buildIssueTree(fullPath);
+
+        if (children.length > 0) {
+          // priority of the folder is the highest priority of its children
+          const folderPriority = Math.min(...children.map((c) => c.priority));
+          const folderItem = new IssueItem(entry.name, uri, vscode.TreeItemCollapsibleState.Collapsed, folderPriority);
+          folderItem.children = children;
+          folders.push(folderItem);
+        }
+      } else if (entry.isFile() && entry.name.endsWith(".md") && entry.name !== ".template") {
         const content = fs.readFileSync(fullPath, "utf8");
         const parsed = matter(content);
         const priority = parsed.data.priority ?? 999;
         const title = parsed.data.title ?? entry.name;
 
-        items.push(
-          new IssueItem(
-            title,
-            uri,
-            vscode.TreeItemCollapsibleState.None,
-            priority
-          )
-        );
+        const fileItem = new IssueItem(title, uri, vscode.TreeItemCollapsibleState.None, priority);
+        files.push(fileItem);
       }
     }
 
-    return items.sort((a, b) => (a.priority ?? 999) - (b.priority ?? 999));
-  }
-
-  private computeFolderPriority(folderPath: string): number {
-    let minPriority = 999;
-
-    const entries = fs.readdirSync(folderPath, { withFileTypes: true });
-
-    for (const entry of entries) {
-      const fullPath = path.join(folderPath, entry.name);
-
-      if (entry.isDirectory()) {
-        const childPrio = this.computeFolderPriority(fullPath);
-        minPriority = Math.min(minPriority, childPrio);
-      } else if (
-        entry.isFile() &&
-        entry.name.endsWith(".md") &&
-        entry.name !== ".template"
-      ) {
-        try {
-          const content = fs.readFileSync(fullPath, "utf8");
-          const parsed = matter(content);
-          const prio = parsed.data.priority ?? 999;
-          minPriority = Math.min(minPriority, prio);
-        } catch {
-          // ignore malformed files
-        }
-      }
-    }
-
-    return minPriority;
+    const sorted = [...folders, ...files].sort((a, b) => a.priority - b.priority);
+    return sorted;
   }
 }

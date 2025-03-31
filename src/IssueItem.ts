@@ -16,4 +16,6 @@ export class IssueItem extends vscode.TreeItem {
       arguments: [this.resourceUri],
     };
   }
+
+  children?: IssueItem[];
 }

@@ -1,6 +1,6 @@
 ---
 title: Fix login bug
-priority: 2
+priority: 1
 assignee: alice
 status: open
 ---
