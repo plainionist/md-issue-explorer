@@ -87,8 +87,8 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand("issueExplorer.refresh", () => issueProvider.refresh()),
 
     vscode.commands.registerCommand("issueExplorer.newIssue", async (target?: IssueItem) => {
-      const folderPath = target?.contextValue === "folder" ? target.resourceUri.fsPath : path.join(rootPath ?? "", "issues");
-      await createNewIssue(folderPath);
+      const folder = target?.contextValue === "folder" ? target.resourceUri.fsPath : issueFolder;
+      await createNewIssue(folder);
     }),
 
     vscode.commands.registerCommand("issueExplorer.deleteIssue", (target: IssueItem) => deleteIssue(issueProvider, target))
