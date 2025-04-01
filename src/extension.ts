@@ -28,7 +28,7 @@ async function deleteIssue(store: IssuesStore, item: IssueItem) {
 }
 
 function registerFileWatcher(store: IssuesStore, issuesProvider: IssuesProvider, context: vscode.ExtensionContext) {
-  const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(store.location, "**/*.md"));
+  const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(store.location, "**"));
 
   watcher.onDidChange(() => issuesProvider.refresh());
   watcher.onDidCreate(() => issuesProvider.refresh());
