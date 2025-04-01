@@ -16,6 +16,13 @@ async function createNewIssue(issuesFolder: string | undefined) {
     return;
   }
 
+  const filePath = createIssue(issuesFolder, name);
+
+  const doc = await vscode.workspace.openTextDocument(filePath);
+  await vscode.window.showTextDocument(doc);
+}
+
+function createIssue(issuesFolder: string, name: string) {
   const templatePath = path.join(issuesFolder, ".template");
   const defaultTemplate = "---\ntitle: \npriority: 9999\n---\n\n";
   const templateContent = fs.existsSync(templatePath) ? fs.readFileSync(templatePath, "utf8") : defaultTemplate;
@@ -26,9 +33,8 @@ async function createNewIssue(issuesFolder: string | undefined) {
   const filePath = path.join(issuesFolder, name.endsWith(".md") ? name : `${name}.md`);
   const issueContent = matter.stringify(parsed.content, parsed.data);
   fs.writeFileSync(filePath, issueContent);
-
-  const doc = await vscode.workspace.openTextDocument(filePath);
-  await vscode.window.showTextDocument(doc);
+  
+  return filePath;
 }
 
 async function deleteIssue(issuesProvider: IssuesProvider, item: IssueItem) {
@@ -38,7 +44,7 @@ async function deleteIssue(issuesProvider: IssuesProvider, item: IssueItem) {
   if (confirmed !== "Yes") {
     return;
   }
-  
+
   const targetPath = item.resourceUri.fsPath;
   const stats = fs.statSync(targetPath);
 
