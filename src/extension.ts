@@ -38,6 +38,7 @@ async function deleteIssue(issuesProvider: IssuesProvider, item: IssueItem) {
   if (confirmed !== "Yes") {
     return;
   }
+  
   const targetPath = item.resourceUri.fsPath;
   const stats = fs.statSync(targetPath);
 
@@ -55,11 +56,11 @@ function registerFileWatcher(issuesFolder: string | undefined, issuesProvider: I
     return;
   }
 
-  const issueWatcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(issuesFolder, "**/*.md"));
+  const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(issuesFolder, "**/*.md"));
 
-  issueWatcher.onDidChange(() => issuesProvider.refresh());
-  issueWatcher.onDidCreate(() => issuesProvider.refresh());
-  issueWatcher.onDidDelete(() => issuesProvider.refresh());
+  watcher.onDidChange(() => issuesProvider.refresh());
+  watcher.onDidCreate(() => issuesProvider.refresh());
+  watcher.onDidDelete(() => issuesProvider.refresh());
 
   vscode.workspace.onDidSaveTextDocument((doc) => {
     const relativePath = path.relative(issuesFolder, doc.uri.fsPath);
@@ -73,7 +74,7 @@ function registerFileWatcher(issuesFolder: string | undefined, issuesProvider: I
     }
   });
 
-  context.subscriptions.push(issueWatcher);
+  context.subscriptions.push(watcher);
 }
 
 export function activate(context: vscode.ExtensionContext) {

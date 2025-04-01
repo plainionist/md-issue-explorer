@@ -21,31 +21,30 @@ export class IssuesProvider implements vscode.TreeDataProvider<IssueItem> {
   async getChildren(element?: IssueItem): Promise<IssueItem[]> {
     const root = element?.resourceUri.fsPath ?? this.issuesRoot;
 
-    return await this.buildIssueTree(root);
+    return await this.buildTree(root);
   }
 
-  private async buildIssueTree(folderPath: string): Promise<IssueItem[]> {
+  private async buildTree(folderPath: string): Promise<IssueItem[]> {
     const entries = fs.readdirSync(folderPath, { withFileTypes: true });
 
-    const folders: IssueItem[] = [];
-    const files: IssueItem[] = [];
+    const issues: IssueItem[] = [];
 
     for (const entry of entries) {
       const fullPath = path.join(folderPath, entry.name);
 
       if (entry.isDirectory()) {
-        const children = await this.buildIssueTree(fullPath);
+        const children = await this.buildTree(fullPath);
 
         if (children.length > 0) {
-          folders.push(this.createFolderItem(children, entry, fullPath));
+          issues.push(this.createFolderItem(children, entry, fullPath));
         }
       } else if (entry.isFile() && entry.name.endsWith(".md") && entry.name !== ".template") {
         const fileItem = this.createFileItem(fullPath, entry);
-        files.push(fileItem);
+        issues.push(fileItem);
       }
     }
 
-    return [...folders, ...files].sort((a, b) => a.priority - b.priority);
+    return issues.sort((a, b) => a.priority - b.priority);
   }
 
   private createFolderItem(children: IssueItem[], entry: fs.Dirent, fullPath: string) {
