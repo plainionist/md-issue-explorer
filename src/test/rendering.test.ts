@@ -2,9 +2,11 @@ import * as assert from 'assert';
 import * as path from 'path';
 import * as fs from 'fs';
 import { IssuesProvider } from '../IssuesProvider';
+import { IssuesStore } from '../IssuesStore';
 
 suite('Issue Explorer - Tree Rendering', () => {
-  const issuesPath = path.join(path.resolve(__dirname, './test-data'), 'issues');
+  const workspaceRoot = path.resolve(__dirname, './test-data');
+  const issuesPath = path.join(workspaceRoot, 'issues');
 
   setup(() => {
     fs.rmSync(issuesPath, { recursive: true, force: true });
@@ -16,7 +18,7 @@ suite('Issue Explorer - Tree Rendering', () => {
     const filePath = path.join(issuesPath, 'my-issue.md');
     fs.writeFileSync(filePath, fileContent);
 
-    const provider = new IssuesProvider(issuesPath);
+    const provider = new IssuesProvider(new IssuesStore(workspaceRoot));
     const items = await provider.getChildren();
 
     assert.strictEqual(items.length, 1);
@@ -27,7 +29,7 @@ suite('Issue Explorer - Tree Rendering', () => {
     fs.writeFileSync(path.join(issuesPath, 'a.md'), `---\ntitle: A\npriority: 5\n---`);
     fs.writeFileSync(path.join(issuesPath, 'b.md'), `---\ntitle: B\npriority: 1\n---`);
 
-    const provider = new IssuesProvider(issuesPath);
+    const provider = new IssuesProvider(new IssuesStore(workspaceRoot));
     const items = await provider.getChildren();
 
     assert.strictEqual(items.length, 2);
@@ -43,7 +45,7 @@ suite('Issue Explorer - Tree Rendering', () => {
     fs.writeFileSync(path.join(folder, 'x.md'), `---\ntitle: X\npriority: 3\n---`);
     fs.writeFileSync(path.join(folder, 'y.md'), `---\ntitle: Y\npriority: 2\n---`);
 
-    const provider = new IssuesProvider(issuesPath);
+    const provider = new IssuesProvider(new IssuesStore(workspaceRoot));
     const items = await provider.getChildren();
 
     assert.strictEqual(items.length, 3);
@@ -60,7 +62,7 @@ suite('Issue Explorer - Tree Rendering', () => {
     fs.writeFileSync(path.join(issuesPath, '.template'), `---\ntitle: Template\npriority: 0\n---`);
     fs.writeFileSync(path.join(issuesPath, 'real.md'), `---\ntitle: Real\npriority: 1\n---`);
 
-    const provider = new IssuesProvider(issuesPath);
+    const provider = new IssuesProvider(new IssuesStore(workspaceRoot));
     const items = await provider.getChildren();
 
     assert.strictEqual(items.length, 1);
@@ -71,7 +73,7 @@ suite('Issue Explorer - Tree Rendering', () => {
     fs.writeFileSync(path.join(issuesPath, 'real.md'), `---\ntitle: Real\npriority: 1\n---`);
     fs.writeFileSync(path.join(issuesPath, 'notes.txt'), `This should be ignored`);
 
-    const provider = new IssuesProvider(issuesPath);
+    const provider = new IssuesProvider(new IssuesStore(workspaceRoot));
     const items = await provider.getChildren();
 
     assert.strictEqual(items.length, 1);
