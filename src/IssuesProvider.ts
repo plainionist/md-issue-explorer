@@ -1,11 +1,11 @@
 import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
-import matter from "gray-matter";
 import { IssueItem } from "./IssueItem";
+import { IssuesStore } from "./IssuesStore";
 
 export class IssuesProvider implements vscode.TreeDataProvider<IssueItem> {
-  constructor(private issuesRoot: string) {}
+  constructor(private store: IssuesStore) {}
 
   private _onDidChangeTreeData: vscode.EventEmitter<IssueItem | undefined | void> = new vscode.EventEmitter<IssueItem | undefined | void>();
   readonly onDidChangeTreeData: vscode.Event<IssueItem | undefined | void> = this._onDidChangeTreeData.event;
@@ -19,8 +19,7 @@ export class IssuesProvider implements vscode.TreeDataProvider<IssueItem> {
   }
 
   async getChildren(element?: IssueItem): Promise<IssueItem[]> {
-    const root = element?.resourceUri.fsPath ?? this.issuesRoot;
-
+    const root = element?.resourceUri.fsPath ?? this.store.location;
     return await this.buildTree(root);
   }
 
@@ -59,11 +58,8 @@ export class IssuesProvider implements vscode.TreeDataProvider<IssueItem> {
   }
 
   private createFileItem(fullPath: string, name: string) {
-    const content = fs.readFileSync(fullPath, "utf8");
-    const parsed = matter(content);
-    const priority = parsed.data.priority ?? 999;
-    const title = parsed.data.title ?? name;
+    const header = this.store.read(fullPath);
 
-    return new IssueItem(title, vscode.Uri.file(fullPath), vscode.TreeItemCollapsibleState.None, priority);
+    return new IssueItem(header.title ?? name, vscode.Uri.file(fullPath), vscode.TreeItemCollapsibleState.None, header.priority);
   }
 }

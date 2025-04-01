@@ -1,43 +1,22 @@
 import * as vscode from "vscode";
 import { IssuesProvider } from "./IssuesProvider";
-import * as fs from "fs";
 import * as path from "path";
-import matter from "gray-matter";
 import { IssueItem } from "./IssueItem";
+import { IssuesStore } from "./IssuesStore";
 
-async function createNewIssue(issuesFolder: string | undefined) {
-  if (!issuesFolder) {
-    vscode.window.showErrorMessage("No workspace folder open.");
-    return;
-  }
-
+async function createNewIssue(store: IssuesStore, folder?: string | undefined) {
   const name = await vscode.window.showInputBox({ prompt: "Enter issue name" });
   if (!name) {
     return;
   }
 
-  const filePath = createIssue(issuesFolder, name);
+  const filePath = store.create(folder, name);
 
   const doc = await vscode.workspace.openTextDocument(filePath);
   await vscode.window.showTextDocument(doc);
 }
 
-function createIssue(issuesFolder: string, name: string) {
-  const templatePath = path.join(issuesFolder, ".template");
-  const defaultTemplate = "---\ntitle: \npriority: 9999\n---\n\n";
-  const templateContent = fs.existsSync(templatePath) ? fs.readFileSync(templatePath, "utf8") : defaultTemplate;
-
-  const parsed = matter(templateContent);
-  parsed.data.title = name;
-
-  const filePath = path.join(issuesFolder, name.endsWith(".md") ? name : `${name}.md`);
-  const issueContent = matter.stringify(parsed.content, parsed.data);
-  fs.writeFileSync(filePath, issueContent);
-  
-  return filePath;
-}
-
-async function deleteIssue(issuesProvider: IssuesProvider, item: IssueItem) {
+async function deleteIssue(store: IssuesStore, item: IssueItem) {
   const label = path.basename(item.resourceUri.fsPath);
   const confirmed = await vscode.window.showWarningMessage(`Delete "${label}"? This cannot be undone.`, { modal: true }, "Yes");
 
@@ -45,37 +24,18 @@ async function deleteIssue(issuesProvider: IssuesProvider, item: IssueItem) {
     return;
   }
 
-  const targetPath = item.resourceUri.fsPath;
-  const stats = fs.statSync(targetPath);
-
-  if (stats.isDirectory()) {
-    fs.rmSync(targetPath, { recursive: true, force: true });
-  } else {
-    fs.unlinkSync(targetPath);
-  }
-
-  issuesProvider.refresh();
+  store.delete(item.resourceUri.fsPath);
 }
 
-function registerFileWatcher(issuesFolder: string | undefined, issuesProvider: IssuesProvider, context: vscode.ExtensionContext) {
-  if (!issuesFolder) {
-    return;
-  }
-
-  const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(issuesFolder, "**/*.md"));
+function registerFileWatcher(store: IssuesStore, issuesProvider: IssuesProvider, context: vscode.ExtensionContext) {
+  const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(store.location, "**/*.md"));
 
   watcher.onDidChange(() => issuesProvider.refresh());
   watcher.onDidCreate(() => issuesProvider.refresh());
   watcher.onDidDelete(() => issuesProvider.refresh());
 
   vscode.workspace.onDidSaveTextDocument((doc) => {
-    const relativePath = path.relative(issuesFolder, doc.uri.fsPath);
-
-    if (
-      !relativePath.startsWith("..") && // doc is inside the issues folder
-      relativePath.endsWith(".md") &&
-      path.basename(doc.uri.fsPath) !== ".template"
-    ) {
+    if (store.contains(doc.uri.fsPath)) {
       issuesProvider.refresh();
     }
   });
@@ -85,8 +45,12 @@ function registerFileWatcher(issuesFolder: string | undefined, issuesProvider: I
 
 export function activate(context: vscode.ExtensionContext) {
   const rootPath = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
-  const issuesFolder = rootPath ? path.join(rootPath, "issues") : "";
-  const issuesProvider = new IssuesProvider(issuesFolder);
+  if (!rootPath) {
+    return;
+  }
+
+  const store = new IssuesStore(rootPath);
+  const issuesProvider = new IssuesProvider(store);
 
   vscode.window.registerTreeDataProvider("issueExplorer", issuesProvider);
 
@@ -94,17 +58,17 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand("issueExplorer.refresh", () => issuesProvider.refresh()),
 
     vscode.commands.registerCommand("issueExplorer.newIssueInFolder", async (target: IssueItem) => {
-      await createNewIssue(target.resourceUri!.fsPath);
+      await createNewIssue(store, target.resourceUri!.fsPath);
     }),
 
     vscode.commands.registerCommand("issueExplorer.newIssue", async () => {
-      await createNewIssue(issuesFolder);
+      await createNewIssue(store);
     }),
 
-    vscode.commands.registerCommand("issueExplorer.deleteIssue", (target: IssueItem) => deleteIssue(issuesProvider, target))
+    vscode.commands.registerCommand("issueExplorer.deleteIssue", (target: IssueItem) => deleteIssue(store, target))
   );
 
-  registerFileWatcher(issuesFolder, issuesProvider, context);
+  registerFileWatcher(store, issuesProvider, context);
 }
 
 export function deactivate() {}
