@@ -29,18 +29,18 @@ export class IssuesStore {
     return filePath;
   }
 
-  public delete(fsPath: string) {
-    const stats = fs.statSync(fsPath);
+  public delete(filePath: string) {
+    const stats = fs.statSync(filePath);
 
     if (stats.isDirectory()) {
-      fs.rmSync(fsPath, { recursive: true, force: true });
+      fs.rmSync(filePath, { recursive: true, force: true });
     } else {
-      fs.unlinkSync(fsPath);
+      fs.unlinkSync(filePath);
     }
   }
 
-  public read(fsPath: string): IssueHeader {
-    const content = fs.readFileSync(fsPath, "utf8");
+  public read(filePath: string): IssueHeader {
+    const content = fs.readFileSync(filePath, "utf8");
     const doc = matter(content);
     
     return {
