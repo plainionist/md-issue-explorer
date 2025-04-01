@@ -8,6 +8,7 @@ export class IssueItem extends vscode.TreeItem {
     public readonly priority: number
   ) {
     super(label, collapsibleState);
+    
     this.tooltip = `Priority: ${this.priority}`;
 
     this.command = {

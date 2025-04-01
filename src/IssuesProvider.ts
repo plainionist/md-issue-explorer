@@ -4,7 +4,7 @@ import * as path from "path";
 import matter from "gray-matter";
 import { IssueItem } from "./IssueItem";
 
-export class IssueProvider implements vscode.TreeDataProvider<IssueItem> {
+export class IssuesProvider implements vscode.TreeDataProvider<IssueItem> {
   constructor(private issuesRoot: string) {}
 
   private _onDidChangeTreeData: vscode.EventEmitter<IssueItem | undefined | void> = new vscode.EventEmitter<IssueItem | undefined | void>();
