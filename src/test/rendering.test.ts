@@ -4,8 +4,7 @@ import * as fs from 'fs';
 import { IssuesProvider } from '../IssuesProvider';
 
 suite('Issue Explorer - Tree Rendering', () => {
-  const testRoot = path.resolve(__dirname, './test-data');
-  const issuesPath = path.join(testRoot, 'issues');
+  const issuesPath = path.join(path.resolve(__dirname, './test-data'), 'issues');
 
   setup(() => {
     fs.rmSync(issuesPath, { recursive: true, force: true });
