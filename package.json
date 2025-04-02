@@ -27,7 +27,7 @@
       "issueActivityBar": [
         {
           "id": "issueExplorer",
-          "icon": "icon.svg"
+          "name": "Explorer"
         }
       ]
     },
