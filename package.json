@@ -27,7 +27,6 @@
       "issueActivityBar": [
         {
           "id": "issueExplorer",
-          "name": "Issue Explorer",
           "icon": "icon.svg"
         }
       ]
