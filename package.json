@@ -2,7 +2,7 @@
   "name": "md-issue-explorer",
   "displayName": "md-issue-explorer",
   "description": "",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "repository": "local",
   "engines": {
     "vscode": "^1.98.0"
@@ -29,7 +29,33 @@
           "name": "Explorer"
         }
       ]
-    }
+    },
+    "commands": [
+      {
+        "command": "issueExplorer.newIssue",
+        "title": "New Issue"
+      },
+      {
+        "command": "issueExplorer.deleteIssue",
+        "title": "Delete"
+      }
+    ],
+    "menus": {
+      "view/item/context": [
+        {
+          "when": "view == issueExplorer",
+          "command": "issueExplorer.deleteIssue",
+          "group": "inline"
+        }
+      ],
+      "view/title": [
+        {
+          "when": "view == issueExplorer",
+          "command": "issueExplorer.newIssue",
+          "group": "navigation"
+        }
+      ]
+    }    
   },
   "scripts": {
     "vscode:prepublish": "pnpm run compile",

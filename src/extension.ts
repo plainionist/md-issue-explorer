@@ -17,6 +17,33 @@ export function activate(context: vscode.ExtensionContext) {
   const provider = new IssuesProvider(issuesFolder);
 
   vscode.window.registerTreeDataProvider("issueExplorer", provider);
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("issueExplorer.newIssue", async () => {
+      const name = await vscode.window.showInputBox({ prompt: "Enter issue name" });
+
+      if (!name) {
+        return;
+      }
+
+      const filePath = path.join(issuesFolder, name.endsWith(".md") ? name : `${name}.md`);
+      fs.writeFileSync(filePath, `---\ntitle: ${name}\npriority: \n---\n\n`);
+
+      const doc = await vscode.workspace.openTextDocument(filePath);
+      await vscode.window.showTextDocument(doc);
+
+      provider.refresh();
+    }),
+
+    vscode.commands.registerCommand("issueExplorer.deleteIssue", async (item: { resourceUri: vscode.Uri }) => {
+      const confirmed = await vscode.window.showWarningMessage(`Delete "${item.resourceUri.path}"?`, { modal: true }, "Yes");
+
+      if (confirmed === "Yes") {
+        fs.unlinkSync(item.resourceUri.fsPath);
+        provider.refresh();
+      }
+    })
+  );
 }
 
 export function deactivate() {}
