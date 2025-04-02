@@ -1,10 +1,10 @@
-import * as vscode from 'vscode';
-import * as fs from 'fs';
-import * as path from 'path';
-import matter from 'gray-matter';
+import * as vscode from "vscode";
+import * as fs from "fs";
+import * as path from "path";
+import matter from "gray-matter";
 
-export class IssueProvider implements vscode.TreeDataProvider<IssueItem> {
-  constructor(private workspaceRoot: string) {}
+export class IssuesProvider implements vscode.TreeDataProvider<IssueItem> {
+  constructor(private issuesFolder: string) {}
 
   private _onDidChangeTreeData: vscode.EventEmitter<IssueItem | undefined | void> = new vscode.EventEmitter<IssueItem | undefined | void>();
   readonly onDidChangeTreeData: vscode.Event<IssueItem | undefined | void> = this._onDidChangeTreeData.event;
@@ -18,21 +18,13 @@ export class IssueProvider implements vscode.TreeDataProvider<IssueItem> {
   }
 
   async getChildren(): Promise<IssueItem[]> {
-    if (!this.workspaceRoot) {
-      return [];
-    }
+    const files = fs.readdirSync(this.issuesFolder).filter((f) => f.endsWith(".md"));
 
-    const issueDir = path.join(this.workspaceRoot, 'issues');
-    if (!fs.existsSync(issueDir)) {
-      return [];
-    }
-
-    const files = fs.readdirSync(issueDir).filter(f => f.endsWith('.md'));
     const items: IssueItem[] = [];
 
     for (const file of files) {
-      const fullPath = path.join(issueDir, file);
-      const content = fs.readFileSync(fullPath, 'utf8');
+      const fullPath = path.join(this.issuesFolder, file);
+      const content = fs.readFileSync(fullPath, "utf8");
       const parsed = matter(content);
       const priority = parsed.data.priority ?? 999;
       const title = parsed.data.title ?? file;
@@ -45,17 +37,13 @@ export class IssueProvider implements vscode.TreeDataProvider<IssueItem> {
 }
 
 export class IssueItem extends vscode.TreeItem {
-  constructor(
-    public readonly label: string,
-    public readonly priority: number,
-    public readonly resourceUri: vscode.Uri
-  ) {
+  constructor(public readonly label: string, public readonly priority: number, public readonly resourceUri: vscode.Uri) {
     super(label, vscode.TreeItemCollapsibleState.None);
     this.tooltip = `Priority: ${priority}`;
     this.command = {
-      command: 'vscode.open',
-      title: 'Open Issue',
-      arguments: [this.resourceUri]
+      command: "vscode.open",
+      title: "Open Issue",
+      arguments: [this.resourceUri],
     };
   }
 }

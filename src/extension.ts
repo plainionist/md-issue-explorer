@@ -1,13 +1,22 @@
-import * as vscode from 'vscode';
-import { IssueProvider } from './IssueProvider';
+import * as vscode from "vscode";
+import * as path from "path";
+import * as fs from "fs";
+import { IssuesProvider } from "./IssuesProvider";
 
 export function activate(context: vscode.ExtensionContext) {
   const rootPath = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
-  const issueProvider = new IssueProvider(rootPath ?? '');
+  if (!rootPath) {
+    return;
+  }
 
-  vscode.window.registerTreeDataProvider('issueExplorer', issueProvider);
+  const issuesFolder = path.join(rootPath, "issues");
+  if (!fs.existsSync(issuesFolder)) {
+    return [];
+  }
 
-  vscode.commands.registerCommand('issueExplorer.refresh', () => issueProvider.refresh());
+  const provider = new IssuesProvider(issuesFolder);
+
+  vscode.window.registerTreeDataProvider("issueExplorer", provider);
 }
 
 export function deactivate() {}
