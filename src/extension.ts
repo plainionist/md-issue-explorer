@@ -34,12 +34,6 @@ function registerFileWatcher(store: IssuesStore, issuesProvider: IssuesProvider,
   watcher.onDidCreate(() => issuesProvider.refresh());
   watcher.onDidDelete(() => issuesProvider.refresh());
 
-  vscode.workspace.onDidSaveTextDocument((doc) => {
-    if (store.contains(doc.uri.fsPath)) {
-      issuesProvider.refresh();
-    }
-  });
-
   context.subscriptions.push(watcher);
 }
 
