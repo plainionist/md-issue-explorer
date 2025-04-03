@@ -1,10 +1,11 @@
 {
   "name": "md-issue-explorer",
+  "displayName": "MarkDown Issue Explorer",
+  "description": "Issue explorer tuned for simplicity and productivity",
+  "version": "0.4.4",
   "publisher": "plainionist",
-  "displayName": "md-issue-explorer",
-  "description": "",
-  "version": "0.4.3",
   "repository": "https://github.com/plainionist/md-issue-explorer",
+  "icon": "icon.png",
   "engines": {
     "vscode": "^1.98.0"
   },
