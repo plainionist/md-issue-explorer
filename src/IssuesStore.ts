@@ -9,10 +9,24 @@ type IssueHeader = {
 
 export class IssuesStore {
   constructor(workspaceRoot: string) {
-    this.location = path.join(workspaceRoot, "issues");
+    this.location = this.resolveLocation(workspaceRoot);
   }
 
   public readonly location: string;
+
+  private resolveLocation(workspaceRoot: string) {
+    const candidatePaths = ["issues", path.join("doc", "issues"), path.join("docs", "issues")];
+
+    for (const candidatePath of candidatePaths) {
+      const fullPath = path.join(workspaceRoot, candidatePath);
+
+      if (fs.existsSync(fullPath)) {
+        return fullPath;
+      }
+    }
+
+    return path.join(workspaceRoot, "issues");
+  }
 
   public create(folder: string | undefined, name: string) {
     const templatePath = path.join(this.location, ".template");
