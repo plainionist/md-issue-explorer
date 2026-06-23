@@ -1,10 +1,11 @@
-import * as fs from "fs";
-import * as path from "path";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import matter from "gray-matter";
 
 type IssueHeader = {
   title: string;
   priority: number;
+  status?: string;
 };
 
 export class IssuesStore {
@@ -56,10 +57,12 @@ export class IssuesStore {
   public read(filePath: string): IssueHeader {
     const content = fs.readFileSync(filePath, "utf8");
     const doc = matter(content);
+    const status = typeof doc.data.status === "string" ? doc.data.status.trim().toLowerCase() : undefined;
     
     return {
       title: doc.data.title,
       priority: doc.data.priority ?? 9999,
+      status,
     };
   }
 

@@ -17,14 +17,14 @@ async function createNewIssue(store: IssuesStore, folder?: string | undefined) {
 }
 
 async function deleteIssue(store: IssuesStore, item: IssueItem) {
-  const label = path.basename(item.resourceUri.fsPath);
+  const label = path.basename(item.targetUri.fsPath);
   const confirmed = await vscode.window.showWarningMessage(`Delete "${label}"? This cannot be undone.`, { modal: true }, "Yes");
 
   if (confirmed !== "Yes") {
     return;
   }
 
-  store.delete(item.resourceUri.fsPath);
+  store.delete(item.targetUri.fsPath);
 }
 
 function registerFileWatcher(store: IssuesStore, issuesProvider: IssuesProvider, context: vscode.ExtensionContext) {
@@ -52,7 +52,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand("issueExplorer.refresh", () => issuesProvider.refresh()),
 
     vscode.commands.registerCommand("issueExplorer.newIssueInFolder", async (target: IssueItem) => {
-      await createNewIssue(store, target.resourceUri!.fsPath);
+      await createNewIssue(store, target.targetUri.fsPath);
     }),
 
     vscode.commands.registerCommand("issueExplorer.newIssue", async () => {

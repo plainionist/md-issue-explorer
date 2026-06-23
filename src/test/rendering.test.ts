@@ -1,6 +1,7 @@
 import * as assert from 'assert';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as vscode from 'vscode';
 import { IssuesProvider } from '../IssuesProvider';
 import { IssuesStore } from '../IssuesStore';
 
@@ -78,5 +79,70 @@ suite('Issue Explorer - Tree Rendering', () => {
 
     assert.strictEqual(items.length, 1);
     assert.strictEqual(items[0].label, 'Real');
+  });
+
+  test('Status green uses green circle icon', async () => {
+    fs.writeFileSync(path.join(issuesPath, 'green.md'), `---\ntitle: Green\npriority: 1\nstatus: green\n---`);
+
+    const provider = new IssuesProvider(new IssuesStore(workspaceRoot));
+    const items = await provider.getChildren();
+
+    assert.strictEqual(items.length, 1);
+    assert.ok(items[0].iconPath instanceof vscode.ThemeIcon);
+    const icon = items[0].iconPath as vscode.ThemeIcon;
+    assert.strictEqual(icon.id, 'circle-filled');
+    assert.strictEqual(icon.color?.id, 'charts.green');
+  });
+
+  test('Status open uses green circle icon', async () => {
+    fs.writeFileSync(path.join(issuesPath, 'open.md'), `---\ntitle: Open\npriority: 1\nstatus: open\n---`);
+
+    const provider = new IssuesProvider(new IssuesStore(workspaceRoot));
+    const items = await provider.getChildren();
+
+    assert.strictEqual(items.length, 1);
+    assert.ok(items[0].iconPath instanceof vscode.ThemeIcon);
+    const icon = items[0].iconPath as vscode.ThemeIcon;
+    assert.strictEqual(icon.id, 'circle-filled');
+    assert.strictEqual(icon.color?.id, 'charts.green');
+  });
+
+  test('Status ready uses green circle icon', async () => {
+    fs.writeFileSync(path.join(issuesPath, 'ready.md'), `---\ntitle: Ready\npriority: 1\nstatus: ready\n---`);
+
+    const provider = new IssuesProvider(new IssuesStore(workspaceRoot));
+    const items = await provider.getChildren();
+
+    assert.strictEqual(items.length, 1);
+    assert.ok(items[0].iconPath instanceof vscode.ThemeIcon);
+    const icon = items[0].iconPath as vscode.ThemeIcon;
+    assert.strictEqual(icon.id, 'circle-filled');
+    assert.strictEqual(icon.color?.id, 'charts.green');
+  });
+
+  test('Status blocked uses red circle icon', async () => {
+    fs.writeFileSync(path.join(issuesPath, 'blocked.md'), `---\ntitle: Blocked\npriority: 1\nstatus: blocked\n---`);
+
+    const provider = new IssuesProvider(new IssuesStore(workspaceRoot));
+    const items = await provider.getChildren();
+
+    assert.strictEqual(items.length, 1);
+    assert.ok(items[0].iconPath instanceof vscode.ThemeIcon);
+    const icon = items[0].iconPath as vscode.ThemeIcon;
+    assert.strictEqual(icon.id, 'circle-filled');
+    assert.strictEqual(icon.color?.id, 'charts.red');
+  });
+
+  test('No status uses white outlined circle icon', async () => {
+    fs.writeFileSync(path.join(issuesPath, 'default.md'), `---\ntitle: Default\npriority: 1\n---`);
+
+    const provider = new IssuesProvider(new IssuesStore(workspaceRoot));
+    const items = await provider.getChildren();
+
+    assert.strictEqual(items.length, 1);
+    assert.ok(items[0].iconPath instanceof vscode.ThemeIcon);
+    const icon = items[0].iconPath as vscode.ThemeIcon;
+    assert.strictEqual(icon.id, 'circle-outline');
+    assert.strictEqual(icon.color?.id, 'foreground');
   });
 });

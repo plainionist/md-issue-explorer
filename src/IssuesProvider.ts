@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
-import * as fs from "fs";
-import * as path from "path";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import { IssueItem } from "./IssueItem";
 import { IssuesStore } from "./IssuesStore";
 
@@ -19,7 +19,7 @@ export class IssuesProvider implements vscode.TreeDataProvider<IssueItem> {
   }
 
   async getChildren(element?: IssueItem): Promise<IssueItem[]> {
-    const root = element?.resourceUri.fsPath ?? this.store.location;
+    const root = element?.targetUri.fsPath ?? this.store.location;
     return await this.buildTree(root);
   }
 
@@ -60,6 +60,6 @@ export class IssuesProvider implements vscode.TreeDataProvider<IssueItem> {
   private createFileItem(fullPath: string, name: string) {
     const header = this.store.read(fullPath);
 
-    return new IssueItem(header.title ?? name, vscode.Uri.file(fullPath), vscode.TreeItemCollapsibleState.None, header.priority);
+    return new IssueItem(header.title ?? name, vscode.Uri.file(fullPath), vscode.TreeItemCollapsibleState.None, header.priority, header.status);
   }
 }
