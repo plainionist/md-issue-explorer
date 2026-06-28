@@ -120,6 +120,32 @@ suite('Issue Explorer - Tree Rendering', () => {
     assert.strictEqual(icon.color?.id, 'charts.green');
   });
 
+  test('Status review uses yellow circle icon', async () => {
+    fs.writeFileSync(path.join(issuesPath, 'review.md'), `---\ntitle: Review\npriority: 1\nstatus: review\n---`);
+
+    const provider = new IssuesProvider(new IssuesStore(workspaceRoot));
+    const items = await provider.getChildren();
+
+    assert.strictEqual(items.length, 1);
+    assert.ok(items[0].iconPath instanceof vscode.ThemeIcon);
+    const icon = items[0].iconPath as vscode.ThemeIcon;
+    assert.strictEqual(icon.id, 'circle-filled');
+    assert.strictEqual(icon.color?.id, 'charts.yellow');
+  });
+
+  test('Status in-review uses yellow circle icon', async () => {
+    fs.writeFileSync(path.join(issuesPath, 'in-review.md'), `---\ntitle: In Review\npriority: 1\nstatus: in-review\n---`);
+
+    const provider = new IssuesProvider(new IssuesStore(workspaceRoot));
+    const items = await provider.getChildren();
+
+    assert.strictEqual(items.length, 1);
+    assert.ok(items[0].iconPath instanceof vscode.ThemeIcon);
+    const icon = items[0].iconPath as vscode.ThemeIcon;
+    assert.strictEqual(icon.id, 'circle-filled');
+    assert.strictEqual(icon.color?.id, 'charts.yellow');
+  });
+
   test('Status blocked uses red circle icon', async () => {
     fs.writeFileSync(path.join(issuesPath, 'blocked.md'), `---\ntitle: Blocked\npriority: 1\nstatus: blocked\n---`);
 

@@ -24,6 +24,10 @@ export class IssueItem extends vscode.TreeItem {
   children?: IssueItem[];
 
   private getStatusIcon(status: string | undefined): vscode.ThemeIcon | vscode.Uri {
+    if (status === "yellow" || status === "review" || status === "in-review") {
+      return new vscode.ThemeIcon("circle-filled", new vscode.ThemeColor("charts.yellow"));
+    }
+
     if (status === "green" || status === "open" || status === "ready") {
       return new vscode.ThemeIcon("circle-filled", new vscode.ThemeColor("charts.green"));
     }
