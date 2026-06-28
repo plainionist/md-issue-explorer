@@ -16,7 +16,12 @@ export class IssuesStore {
   public readonly location: string;
 
   private resolveLocation(workspaceRoot: string) {
-    const candidatePaths = ["issues", path.join("doc", "issues"), path.join("docs", "issues")];
+    // Support opening VS Code directly on an issues folder.
+    if (path.basename(workspaceRoot).toLowerCase() === "issues") {
+      return workspaceRoot;
+    }
+
+    const candidatePaths = [path.join("docs", "issues"), path.join("doc", "issues"), "issues"];
 
     for (const candidatePath of candidatePaths) {
       const fullPath = path.join(workspaceRoot, candidatePath);

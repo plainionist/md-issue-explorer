@@ -71,8 +71,14 @@ function registerFileWatcher(store: IssuesStore, issuesProvider: IssuesProvider,
   context.subscriptions.push(watcher);
 }
 
+export function toGitPathspec(rootPath: string, issuesLocation: string) {
+  const relativePath = path.relative(rootPath, issuesLocation).split(path.sep).join("/");
+
+  return relativePath || ".";
+}
+
 async function commitIssues(rootPath: string, store: IssuesStore) {
-  const issuesPathspec = path.relative(rootPath, store.location).split(path.sep).join("/");
+  const issuesPathspec = toGitPathspec(rootPath, store.location);
 
   try {
     await runGit(rootPath, ["add", "-A", "--", issuesPathspec]);

@@ -3,6 +3,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 import { IssuesStore } from "../IssuesStore";
+import { toGitPathspec } from "../extension";
 
 suite("Store", () => {
   let tmpRoot: string;
@@ -104,5 +105,31 @@ suite("Store", () => {
     fs.writeFileSync(outside, "---\ntitle: Outside\npriority: 1\n---");
     
     assert.strictEqual(store.contains(outside), false);
+  });
+
+  test("Resolves docs/issues over top-level issues", () => {
+    const topLevelIssues = path.join(tmpRoot, "issues");
+    const docsIssues = path.join(tmpRoot, "docs", "issues");
+    fs.mkdirSync(topLevelIssues, { recursive: true });
+    fs.mkdirSync(docsIssues, { recursive: true });
+
+    const docsStore = new IssuesStore(tmpRoot);
+
+    assert.strictEqual(docsStore.location, docsIssues);
+  });
+
+  test("Uses workspace root when workspace itself is an issues folder", () => {
+    const issuesRoot = path.join(tmpRoot, "docs", "issues");
+    fs.mkdirSync(issuesRoot, { recursive: true });
+
+    const issuesRootStore = new IssuesStore(issuesRoot);
+
+    assert.strictEqual(issuesRootStore.location, issuesRoot);
+  });
+
+  test("Git pathspec is dot when issues folder equals workspace root", () => {
+    const issuesRoot = path.join(tmpRoot, "docs", "issues");
+
+    assert.strictEqual(toGitPathspec(issuesRoot, issuesRoot), ".");
   });
 });

@@ -4,7 +4,9 @@ Pragmatic Issue Tracker based on Markdown, VsCode and your version control syste
 ## Setup
 
 Create a folder "issues" in the root of your workspace.
-You can also create the "issues" folder elsewhere (e.g. under "docs" folder) but then u have to open VSCode from this folder.
+You can also create the "issues" folder elsewhere (e.g. under "docs" folder).
+Supported locations are `issues`, `doc/issues`, and `docs/issues` from your workspace root.
+Opening VS Code directly in an `issues` folder is also supported.
 
 Sub folders are supported.
 
