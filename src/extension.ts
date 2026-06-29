@@ -76,6 +76,7 @@ async function commitIssues(rootPath: string, store: IssuesStore) {
     await runGit(gitRoot, ["add", "-A", "--", issuesTarget]);
 
     await runGit(gitRoot, ["commit", "-m", "backlog", "--", issuesTarget]);
+    await vscode.commands.executeCommand("git.refresh");
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     void vscode.window.showErrorMessage(`Issue commit failed: ${message}`);
