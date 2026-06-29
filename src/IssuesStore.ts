@@ -15,10 +15,14 @@ export class IssuesStore {
 
   public readonly location: string;
 
+  private canonicalizeExistingPath(fullPath: string) {
+    return fs.realpathSync.native(fullPath);
+  }
+
   private resolveLocation(workspaceRoot: string) {
     // Support opening VS Code directly on an issues folder.
     if (path.basename(workspaceRoot).toLowerCase() === "issues") {
-      return workspaceRoot;
+      return this.canonicalizeExistingPath(workspaceRoot);
     }
 
     const candidatePaths = [path.join("docs", "issues"), path.join("doc", "issues"), "issues"];
@@ -27,7 +31,7 @@ export class IssuesStore {
       const fullPath = path.join(workspaceRoot, candidatePath);
 
       if (fs.existsSync(fullPath)) {
-        return fullPath;
+        return this.canonicalizeExistingPath(fullPath);
       }
     }
 

@@ -2,8 +2,9 @@ import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
+import { execFileSync } from "node:child_process";
 import { IssuesStore } from "../IssuesStore";
-import { toGitPathspec } from "../extension";
+import { hasIssueChanges, toGitPathspec } from "../extension";
 
 suite("Store", () => {
   let tmpRoot: string;
@@ -16,7 +17,7 @@ suite("Store", () => {
   });
 
   teardown(() => {
-    fs.rmSync(tmpRoot, { recursive: true, force: true });
+    fs.rmSync(tmpRoot, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 });
   });
 
   test("Create new issue", () => {
@@ -118,6 +119,15 @@ suite("Store", () => {
     assert.strictEqual(docsStore.location, docsIssues);
   });
 
+  test("Preserves actual casing for docs/Issues", () => {
+    const docsIssues = path.join(tmpRoot, "docs", "Issues");
+    fs.mkdirSync(docsIssues, { recursive: true });
+
+    const docsStore = new IssuesStore(tmpRoot);
+
+    assert.strictEqual(docsStore.location, fs.realpathSync.native(docsIssues));
+  });
+
   test("Uses workspace root when workspace itself is an issues folder", () => {
     const issuesRoot = path.join(tmpRoot, "docs", "issues");
     fs.mkdirSync(issuesRoot, { recursive: true });
@@ -131,5 +141,64 @@ suite("Store", () => {
     const issuesRoot = path.join(tmpRoot, "docs", "issues");
 
     assert.strictEqual(toGitPathspec(issuesRoot, issuesRoot), ".");
+  });
+});
+
+suite("Commit change detection", () => {
+  let tmpRoot: string;
+  let issuesRoot: string;
+
+  const git = (...args: string[]) => execFileSync("git", ["-C", tmpRoot, ...args], { encoding: "utf8" }).trim();
+
+  setup(() => {
+    tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "issues-git-test-"));
+    issuesRoot = path.join(tmpRoot, "issues");
+    fs.mkdirSync(issuesRoot, { recursive: true });
+
+    git("init");
+    git("config", "user.name", "Test User");
+    git("config", "user.email", "test@example.com");
+  });
+
+  teardown(() => {
+    try {
+      fs.rmSync(tmpRoot, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 });
+    } catch {
+      // Best-effort cleanup: Windows can briefly lock files in temp git repos during test shutdown.
+    }
+  });
+
+  function commitIssue(name: string, content = "---\ntitle: Test\npriority: 1\n---\n") {
+    const issuePath = path.join(issuesRoot, name);
+    fs.writeFileSync(issuePath, content);
+    git("add", "-A", "--", "issues");
+    git("commit", "-m", "seed", "--", "issues");
+    return issuePath;
+  }
+
+  test("Detects untracked files under issues", async () => {
+    fs.writeFileSync(path.join(issuesRoot, "new.md"), "---\ntitle: New\npriority: 1\n---\n");
+
+    assert.strictEqual(await hasIssueChanges(tmpRoot, issuesRoot), true);
+  });
+
+  test("Detects modified tracked files under issues", async () => {
+    const issuePath = commitIssue("tracked.md");
+    fs.writeFileSync(issuePath, "---\ntitle: Changed\npriority: 1\n---\n");
+
+    assert.strictEqual(await hasIssueChanges(tmpRoot, issuesRoot), true);
+  });
+
+  test("Detects deleted tracked files under issues", async () => {
+    const issuePath = commitIssue("gone.md");
+    fs.unlinkSync(issuePath);
+
+    assert.strictEqual(await hasIssueChanges(tmpRoot, issuesRoot), true);
+  });
+
+  test("Ignores changes outside issues", async () => {
+    fs.writeFileSync(path.join(tmpRoot, "outside.md"), "outside");
+
+    assert.strictEqual(await hasIssueChanges(tmpRoot, issuesRoot), false);
   });
 });

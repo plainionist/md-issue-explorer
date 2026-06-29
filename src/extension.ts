@@ -18,24 +18,10 @@ function runGit(rootPath: string, args: string[]) {
   });
 }
 
-function hasStagedIssueChanges(rootPath: string, issuesPathspec: string) {
-  return new Promise<boolean>((resolve, reject) => {
-    execFile("git", ["-C", rootPath, "diff", "--cached", "--quiet", "--exit-code", "--", issuesPathspec], (error) => {
-      if (!error) {
-        resolve(false);
-        return;
-      }
+export async function hasIssueChanges(rootPath: string, issuesPathspec: string) {
+  const status = await runGit(rootPath, ["status", "--porcelain", "--untracked-files=all", "--", issuesPathspec]);
 
-      const exitCode = typeof error.code === "number" ? error.code : undefined;
-
-      if (exitCode === 1) {
-        resolve(true);
-        return;
-      }
-
-      reject(new Error(error.message));
-    });
-  });
+  return status.length > 0;
 }
 
 async function createNewIssue(store: IssuesStore, folder?: string | undefined) {
@@ -78,17 +64,18 @@ export function toGitPathspec(rootPath: string, issuesLocation: string) {
 }
 
 async function commitIssues(rootPath: string, store: IssuesStore) {
-  const issuesPathspec = toGitPathspec(rootPath, store.location);
-
   try {
-    await runGit(rootPath, ["add", "-A", "--", issuesPathspec]);
+    const gitRoot = await runGit(rootPath, ["rev-parse", "--show-toplevel"]);
+    const issuesTarget = path.resolve(store.location);
 
-    if (!(await hasStagedIssueChanges(rootPath, issuesPathspec))) {
-      void vscode.window.showInformationMessage("No changes under issues to commit.");
+    if (!(await hasIssueChanges(gitRoot, issuesTarget))) {
+      void vscode.window.showInformationMessage(`No changes under ${store.location} to commit.`);
       return;
     }
 
-    await runGit(rootPath, ["commit", "-m", "backlog", "--", issuesPathspec]);
+    await runGit(gitRoot, ["add", "-A", "--", issuesTarget]);
+
+    await runGit(gitRoot, ["commit", "-m", "backlog", "--", issuesTarget]);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     void vscode.window.showErrorMessage(`Issue commit failed: ${message}`);

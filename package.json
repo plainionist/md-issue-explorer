@@ -2,7 +2,7 @@
   "name": "md-issue-explorer",
   "displayName": "MarkDown Issue Explorer",
   "description": "Issue explorer tuned for simplicity and productivity",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "publisher": "plainionist",
   "repository": "https://github.com/plainionist/md-issue-explorer",
   "icon": "icon.png",
